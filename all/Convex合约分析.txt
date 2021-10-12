@@ -1,0 +1,55 @@
+CrvDepositor ：0x8014595F2AB54cD7c604B00E9fb932176fDc86Ae
+BaseRewardPool： cvxCRV 最多的池子
+
+一 . 存CRV   CrvDepositor
+1.用户传入 amount _lock  _stakeAddress 三个参数
+2.确认转入 crv数量
+	lock 把 crv 转入到  staker(CurveVoterProxy) 
+	把 staker 中得 crv 调用increaseAmount 转给 vote escrow CRV 
+	增加锁仓时间，目的是加速更快？？？？？？？？？？？？？？？？？？？？？？？？？？
+3.如果_lock 是 true , crv 转到 staker(CurveVoterProxy) 中
+4.如果_lock 是 false ，crv 转入到 CrvDepositor（本合约） 中。根据 lockIncentive 计算 预计锁定的成本，延时付
+5.判断 _stakeAddress 是否传入
+6.不传入，直接把 cvxCrv 转给 用户
+7.传入的话，把 cvxCrv  stakeFor给了 _stakeAddress（用户挖矿数据 在这里计算）
+
+二. 锁 CVX CvxLocker
+
+0. 锁仓	fucntion: lock(address _account, uint256 _amount, uint256 _spendRatio)
+1. _checkpointEpoch 确认当前 时间段有数据
+2. 预计用于加速花费的数量  =  ratio * amount 
+3. 计算加速率
+4. 根据 加速率 计算出 加速后的 数量  和 原来的数量累加 得到 加速后数量
+5. 更新用户锁仓额 和 加速额
+6. 添加 locked 和 boosted Supply
+7. 根据当前时间段起始时间 计算 预计锁仓时间 119 天
+8. 根据预计锁仓时间  和 锁仓列表的最后一个时间计算 存储 锁仓数据
+9. 增加epoch 点位数据 supply
+10. 加速预计花费数量  转给 boostPayment （TreasuryFunds： 0x1389388d01708118b497f59521f6943Be2541bb7）
+11. 更新 cvx 在两个池子的平衡
+
+三. 提取本金 
+0. 取出 锁定的token function _processExpiredLocks(address _account, bool _relock, uint256 _spendRatio, address _withdrawTo, address _rewardAddress, uint256 _checkDelay) internal
+	_checkDelay 延迟4 周
+1. 获取用户锁仓的列表 
+2. 获得 用户 锁仓的总余额  加速后的余额
+3. 根据计算时间  统一结算 locked  boosted 
+4. 如果 checkDelay > 0  计算 奖励 ： 
+   01. 计算currentEpoch - delay 的 当前时间
+   02. 计算过去多少周
+   03. rRate =  kickRewardPerEpoch * （周数量 + 1 ) 与  10000 分母  -> 取小
+   04. reward = reward + lock.amount *  rRate / 10000 分母
+5. 确认是否需要 先从stakingProxy  那里 转 cvx 进来， 保证足够 
+6. 如果reward > 0  直接转出reward cvx 
+7. 判断 relock 是否重新锁仓 
+7  转入locked
+
+四  提取 奖励
+0.getReward(address _account, bool _stake)
+1.
+
+
+
+
+
+PoolManagerV2 -> addPool addPool(address _gauge, uint256 _stashVersion) -> 生成 DepositToken 
